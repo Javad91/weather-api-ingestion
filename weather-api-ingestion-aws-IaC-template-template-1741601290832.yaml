@@ -1,0 +1,194 @@
+---
+Metadata:
+  AWSToolsMetrics:
+    IaC_Generator: "arn:aws:cloudformation:ap-southeast-2:820242923691:generatedTemplate/443508de-98cc-448f-8c02-5af9881221ab"
+Parameters:
+  LambdaFunction00weatherapiingestionawslambdafunction00jllYvCodeS3Bucketew1n2:
+    NoEcho: "true"
+    Type: "String"
+    Description: "An Amazon S3 bucket in the same AWS-Region as your function. The\
+      \ bucket can be in a different AWS-account."
+  LambdaFunction00weatherapiingestionawslambdafunction00jllYvCodeS3ObjectVersionTfFtL:
+    NoEcho: "true"
+    Type: "String"
+    Description: "For versioned objects, the version of the deployment package object\
+      \ to use."
+  LambdaFunction00weatherapiingestionawslambdafunction00jllYvCodeZipFilezmiwT:
+    NoEcho: "true"
+    Type: "String"
+    Description: "(Node.js and Python) The source code of your Lambda function. If\
+      \ you include your function source inline with this parameter, CFN places it\
+      \ in a file named ``index`` and zips it to create a [deployment package](https://docs.aws.amazon.com/lambda/latest/dg/gettingstarted-package.html).\
+      \ This zip file cannot exceed 4MB. For the ``Handler`` property, the first part\
+      \ of the handler identifier must be ``index``. For example, ``index.handler``.\n\
+      \  When you specify source code inline for a Node.js function, the ``index``\
+      \ file that CFN creates uses the extension ``.js``. This means that LAM treats\
+      \ the file as a CommonJS module. ES modules aren't supported for inline functions.\n\
+      \   For JSON, you must escape quotes and special characters such as newline\
+      \ (``\\n``) with a backslash.\n If you specify a function that interacts with\
+      \ an AWS CloudFormation custom resource, you don't have to write your own functions\
+      \ to send responses to the custom resource that invoked the function. AWS CloudFormation\
+      \ provides a response module ([cfn-response](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-lambda-function-code-cfnresponsemodule.html))\
+      \ that simplifies sending responses. See [Using Lambda with CloudFormation](https://docs.aws.amazon.com/lambda/latest/dg/services-cloudformation.html)\
+      \ for details."
+  LambdaFunction00weatherapiingestionawslambdafunction00jllYvCodeImageUrizxnjI:
+    NoEcho: "true"
+    Type: "String"
+    Description: "URI of a [container image](https://docs.aws.amazon.com/lambda/latest/dg/lambda-images.html)\
+      \ in the Amazon ECR registry."
+  LambdaFunction00weatherapiingestionawslambdafunction00jllYvCodeSourceKMSKeyArnnVwAS:
+    NoEcho: "true"
+    Type: "String"
+    Description: "The ARN of the KMSlong (KMS) customer managed key that's used to\
+      \ encrypt your function's .zip deployment package. If you don't provide a customer\
+      \ managed key, Lambda uses an [owned key](https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html#aws-owned-cmk)."
+  LambdaFunction00weatherapiingestionawslambdafunction00jllYvCodeS3KeynZeOs:
+    NoEcho: "true"
+    Type: "String"
+    Description: "The Amazon S3 key of the deployment package."
+Resources:
+  IAMRole00LambdaroleS3BucketCloudWatchLogs006w7Cq:
+    UpdateReplacePolicy: "Delete"
+    Type: "AWS::IAM::Role"
+    DeletionPolicy: "Delete"
+    Properties:
+      Path: "/"
+      ManagedPolicyArns:
+      - "arn:aws:iam::820242923691:policy/Lambda-permission-S3Bucket-CloudWatchLogs"
+      MaxSessionDuration: 3600
+      RoleName: "Lambda-role-S3Bucket-CloudWatchLogs"
+      Description: "This execution role is an AWS Identity and Access Management (IAM)\
+        \ role that grants a Lambda function permission to access AWS services and\
+        \ resources."
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+        - Action: "sts:AssumeRole"
+          Effect: "Allow"
+          Principal:
+            Service: "lambda.amazonaws.com"
+  S3Bucket00weatherapiingestionawsbucket008MHyv:
+    UpdateReplacePolicy: "Delete"
+    Type: "AWS::S3::Bucket"
+    DeletionPolicy: "Delete"
+    Properties:
+      PublicAccessBlockConfiguration:
+        RestrictPublicBuckets: true
+        IgnorePublicAcls: true
+        BlockPublicPolicy: true
+        BlockPublicAcls: true
+      BucketName: "weather-api-ingestion-aws-bucket"
+      OwnershipControls:
+        Rules:
+        - ObjectOwnership: "BucketOwnerEnforced"
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+        - BucketKeyEnabled: true
+          ServerSideEncryptionByDefault:
+            SSEAlgorithm: "AES256"
+  IAMManagedPolicy00policyLambdapermissionS3BucketCloudWatchLogs00pjLJv:
+    UpdateReplacePolicy: "Delete"
+    Type: "AWS::IAM::ManagedPolicy"
+    DeletionPolicy: "Delete"
+    Properties:
+      ManagedPolicyName: "Lambda-permission-S3Bucket-CloudWatchLogs"
+      Path: "/"
+      Description: "Create a permissions policy that allows Lambda to put objects\
+        \ into an Amazon S3 bucket and write to Amazon CloudWatch Logs."
+      Groups: []
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+        - Resource: "arn:aws:logs:*:*:*"
+          Action:
+          - "logs:PutLogEvents"
+          - "logs:CreateLogGroup"
+          - "logs:CreateLogStream"
+          Effect: "Allow"
+        - Resource: "arn:aws:s3:::*/*"
+          Action:
+          - "s3:PutObject"
+          Effect: "Allow"
+      Roles:
+      - Ref: "IAMRole00LambdaroleS3BucketCloudWatchLogs006w7Cq"
+      Users: []
+  EventsRule00ruleweatherapitriggerlambdaeventbridge00kJlW2:
+    UpdateReplacePolicy: "Delete"
+    Type: "AWS::Events::Rule"
+    DeletionPolicy: "Delete"
+    Properties:
+      EventBusName:
+        Ref: "EventsEventBus00default00pdSav"
+      ScheduleExpression: "rate(1 hour)"
+      Description: "Schedule a Lambda function to fetch weather API data hourly."
+      State: "ENABLED"
+      Targets:
+      - Arn:
+          Fn::GetAtt:
+          - "LambdaFunction00weatherapiingestionawslambdafunction00jllYv"
+          - "Arn"
+        Id: "eu1ggbxl8euxs8iajt"
+      Id: "weather-api-trigger-lambda-eventbridge"
+      Name: "weather-api-trigger-lambda-eventbridge"
+  LambdaFunction00weatherapiingestionawslambdafunction00jllYv:
+    UpdateReplacePolicy: "Delete"
+    Type: "AWS::Lambda::Function"
+    DeletionPolicy: "Delete"
+    Properties:
+      MemorySize: 128
+      Description: ""
+      TracingConfig:
+        Mode: "PassThrough"
+      Timeout: 3
+      RuntimeManagementConfig:
+        UpdateRuntimeOn: "Auto"
+      Handler: "lambda_function.lambda_handler"
+      Code:
+        SourceKMSKeyArn:
+          Ref: "LambdaFunction00weatherapiingestionawslambdafunction00jllYvCodeSourceKMSKeyArnnVwAS"
+        S3ObjectVersion:
+          Ref: "LambdaFunction00weatherapiingestionawslambdafunction00jllYvCodeS3ObjectVersionTfFtL"
+        S3Bucket:
+          Ref: "LambdaFunction00weatherapiingestionawslambdafunction00jllYvCodeS3Bucketew1n2"
+        ZipFile:
+          Ref: "LambdaFunction00weatherapiingestionawslambdafunction00jllYvCodeZipFilezmiwT"
+        ImageUri:
+          Ref: "LambdaFunction00weatherapiingestionawslambdafunction00jllYvCodeImageUrizxnjI"
+        S3Key:
+          Ref: "LambdaFunction00weatherapiingestionawslambdafunction00jllYvCodeS3KeynZeOs"
+      Role:
+        Fn::GetAtt:
+        - "IAMRole00LambdaroleS3BucketCloudWatchLogs006w7Cq"
+        - "Arn"
+      FileSystemConfigs: []
+      FunctionName: "weather-api-ingestion-aws-lambda-function"
+      Runtime: "python3.9"
+      PackageType: "Zip"
+      LoggingConfig:
+        LogFormat: "Text"
+        LogGroup: "/aws/lambda/weather-api-ingestion-aws-lambda-function"
+      RecursiveLoop: "Terminate"
+      EphemeralStorage:
+        Size: 512
+      Architectures:
+      - "x86_64"
+  EventsEventBus00default00pdSav:
+    UpdateReplacePolicy: "Delete"
+    Type: "AWS::Events::EventBus"
+    DeletionPolicy: "Delete"
+    Properties:
+      Tags: []
+      Name: "default"
+  LambdaPermission00functionweatherapiingestionawslambdafunction0000NLM:
+    UpdateReplacePolicy: "Delete"
+    Type: "AWS::Lambda::Permission"
+    DeletionPolicy: "Delete"
+    Properties:
+      FunctionName:
+        Fn::GetAtt:
+        - "LambdaFunction00weatherapiingestionawslambdafunction00jllYv"
+        - "Arn"
+      Action: "lambda:InvokeFunction"
+      SourceArn:
+        Ref: "EventsRule00ruleweatherapitriggerlambdaeventbridge00kJlW2"
+      Principal: "events.amazonaws.com"
